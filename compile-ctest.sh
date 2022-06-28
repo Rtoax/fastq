@@ -3,7 +3,7 @@
 
 rm -f *.out
 
-redis_dict_dir="../../redis/dict/6.2.1/"
+redis_dict_dir="./hiredis"
 redis_dict_srcs=(dict.c  mt19937-64.c  sds.c  siphash.c  zmalloc.c)
 redis_dict_objs=""
 for dict in ${redis_dict_srcs[@]}
