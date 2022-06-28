@@ -6,7 +6,7 @@
 #define _GNU_SOURCE             /* See feature_test_macros(7) */
 #include <sched.h>
 #include <unistd.h>
-    
+
 #include <stdbool.h>
 #include <err.h>
 #include <errno.h>
@@ -66,7 +66,7 @@ static void __parse_cpu_list(char* cpu_list, cpu_set_t* cpu_set)
 	int i;
     char* begin = cpu_list;
     const int np = sysconf(_SC_NPROCESSORS_ONLN);
-    
+
     while (1)
     {
         bool last_token = false;
@@ -121,7 +121,7 @@ static void reset_self_cpuset(char *cpu_list)
     CPU_ZERO(&cpu_set);
     __parse_cpu_list(cpu_list, &cpu_set);
     if (0 != sched_setaffinity(pid, sizeof(cpu_set_t), &cpu_set)) {
-        printf("[ERROR]: sched_setaffinity(%d, %d, %s) ", 
+        printf("[ERROR]: sched_setaffinity(%d, %d, %s) ",
                     gettid(), sizeof(cpu_set_t), cpu_list);
         assert(0);
     }

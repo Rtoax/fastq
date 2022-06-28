@@ -1,5 +1,5 @@
 enum {
-    NODE_1 = 1, 
+    NODE_1 = 1,
     NODE_2,
     NODE_3,
     NODE_4,
@@ -47,7 +47,7 @@ __(NODE_17),
 #endif
 
 typedef struct  {
-#define TEST_MSG_MAGIC 0x123123ff    
+#define TEST_MSG_MAGIC 0x123123ff
     unsigned long msgType;
     unsigned long msgCode;
     unsigned long msgSubCode;
@@ -77,20 +77,20 @@ static char *global_cpu_lists[10] = {
     "3",    //enqueue3
     "4",    //enqueue4
     "5",    //enqueue5
-    "6",    
-    "7",    
-    "8",    
-    "9",    
+    "6",
+    "7",
+    "8",
+    "9",
 };
 
 
 static bool moduleID_filter_fn(unsigned long srcID, unsigned long dstID){
-//    if(srcID != NODE_1 && 
-//       srcID != NODE_2 && 
-//       srcID != NODE_3 && 
-//       srcID != NODE_4 && 
+//    if(srcID != NODE_1 &&
+//       srcID != NODE_2 &&
+//       srcID != NODE_3 &&
+//       srcID != NODE_4 &&
 //       srcID != 0) return false;
-//    
+//
 //    if(dstID == NODE_1) return true;
 //    else return false;
 //    printf("filter.\n");
@@ -113,8 +113,8 @@ static dump_all_fastq() {
     }
     int i;
     for(i=0;i<num;i++) {
-        
-        printf( "\t %3ld -> %3ld:  %16ld %16ld\r\n", 
+
+        printf( "\t %3ld -> %3ld:  %16ld %16ld\r\n",
                 buffer[i].src_module, buffer[i].dst_module, buffer[i].enqueue, buffer[i].dequeue);
     }
 }
