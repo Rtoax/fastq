@@ -74,10 +74,10 @@ void zlibc_free(void *ptr) {
 #define MALLOC_MIN_SIZE(x) ((x) > 0 ? (x) : sizeof(long))
 
 /* Explicitly override malloc/free etc when using tcmalloc. */
-#define malloc(size) tc_malloc(size)
-#define calloc(count,size) tc_calloc(count,size)
-#define realloc(ptr,size) tc_realloc(ptr,size)
-#define free(ptr) tc_free(ptr)
+#define malloc(size) malloc(size)
+#define calloc(count,size) calloc(count,size)
+#define realloc(ptr,size) realloc(ptr,size)
+#define free(ptr) free(ptr)
 
 #define update_zmalloc_stat_alloc(__n) atomicIncr(used_memory,(__n))
 #define update_zmalloc_stat_free(__n) atomicDecr(used_memory,(__n))

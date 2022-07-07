@@ -9,13 +9,13 @@ redis_dict_objs=""
 for dict in ${redis_dict_srcs[@]}
 do
 	echo "Compile $dict -> ${dict%.*}.o"
-	gcc $redis_dict_dir/$dict -c -o ${dict%.*}.o -I$redis_dict_dir -ltcmalloc -g
+	gcc $redis_dict_dir/$dict -c -o ${dict%.*}.o -I$redis_dict_dir -g
 	redis_dict_objs="$redis_dict_objs ${dict%.*}.o"
 done
 
 echo "Redis Dict objects : $redis_dict_objs"
 
-LIBS="$redis_dict_objs fastq.c -lcrypt -pthread -I./ -I$redis_dict_dir -ltcmalloc -g"
+LIBS="$redis_dict_objs fastq.c -lcrypt -pthread -I./ -I$redis_dict_dir -g"
 
 #if [ $# -lt 1 ]; then
 #	echo "$0 [program source file]"
@@ -29,10 +29,10 @@ test_files=(test.c )
 for file in ${test_files[@]}
 do
 	echo "Compile $file -> ${file%.*}.out"
-#	gcc $file $LIBS -o ${file%.*}.epoll.stat.out -w $* -D_FASTQ_EPOLL=1 -D_FASTQ_STATS=1
-	gcc $file $LIBS -o ${file%.*}.epoll.out -w $* -D_FASTQ_EPOLL=1 -g -ggdb
+	gcc $file $LIBS -o ${file%.*}.epoll.stat.out -w $* -D_FASTQ_EPOLL=1 -D_FASTQ_STATS=1
+#	gcc $file $LIBS -o ${file%.*}.epoll.out -w $* -D_FASTQ_EPOLL=1 -g -ggdb
 #	gcc $file $LIBS -o ${file%.*}.select.stat.out -w $* -D_FASTQ_SELECT=1  -D_FASTQ_STATS=1
-	gcc $file $LIBS -o ${file%.*}.select.out -w $* -D_FASTQ_SELECT=1 -g -ggdb
+#	gcc $file $LIBS -o ${file%.*}.select.out -w $* -D_FASTQ_SELECT=1 -g -ggdb
 done
 
 
