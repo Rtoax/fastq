@@ -348,5 +348,3 @@ FastQCreateModuleDump(const unsigned long moduleID,
 #pragma GCC diagnostic pop
 
 #endif /*<__fAStMQ_H>*/
-
-

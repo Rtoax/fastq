@@ -1,22 +1,22 @@
 enum {
-    NODE_1 = 1,
-    NODE_2,
-    NODE_3,
-    NODE_4,
-    NODE_5,
-    NODE_6,
-    NODE_7,
-    NODE_8,
-    NODE_9,
-    NODE_10,
-    NODE_11,
-    NODE_12,
-    NODE_13,
-    NODE_14,
-    NODE_15,
-    NODE_16,
-    NODE_17,
-    NODE_NUM
+	NODE_1 = 1,
+	NODE_2,
+	NODE_3,
+	NODE_4,
+	NODE_5,
+	NODE_6,
+	NODE_7,
+	NODE_8,
+	NODE_9,
+	NODE_10,
+	NODE_11,
+	NODE_12,
+	NODE_13,
+	NODE_14,
+	NODE_15,
+	NODE_16,
+	NODE_17,
+	NODE_NUM
 };
 
 const char *ModuleName[] = {
@@ -48,73 +48,72 @@ __(NODE_17),
 
 typedef struct  {
 #define TEST_MSG_MAGIC 0x123123ff
-    unsigned long msgType;
-    unsigned long msgCode;
-    unsigned long msgSubCode;
-    unsigned long value;
-    int magic;
-    uint64_t latency;
+	unsigned long msgType;
+	unsigned long msgCode;
+	unsigned long msgSubCode;
+	unsigned long value;
+	int magic;
+	uint64_t latency;
 }__attribute__((aligned(64))) test_msgs_t;
 
 struct enqueue_arg {
-    int srcModuleId;
-    int dstModuleId;
-    char *cpu_list;
-    test_msgs_t *msgs;
+	int srcModuleId;
+	int dstModuleId;
+	char *cpu_list;
+	test_msgs_t *msgs;
 };
 
 struct dequeue_arg {
-    int srcModuleId;
-    int dstModuleId;
-    char *cpu_list;
+	int srcModuleId;
+	int dstModuleId;
+	char *cpu_list;
 };
 
 
 static char *global_cpu_lists[10] = {
-    "0",    //dequeue
-    "1",    //enqueue1
-    "2",    //enqueue2
-    "3",    //enqueue3
-    "4",    //enqueue4
-    "5",    //enqueue5
-    "6",
-    "7",
-    "8",
-    "9",
+	"0",    //dequeue
+	"1",    //enqueue1
+	"2",    //enqueue2
+	"3",    //enqueue3
+	"4",    //enqueue4
+	"5",    //enqueue5
+	"6",
+	"7",
+	"8",
+	"9",
 };
 
 
-static bool moduleID_filter_fn(unsigned long srcID, unsigned long dstID){
+static bool moduleID_filter_fn(unsigned long srcID, unsigned long dstID)
+{
 //    if(srcID != NODE_1 &&
 //       srcID != NODE_2 &&
 //       srcID != NODE_3 &&
 //       srcID != NODE_4 &&
 //       srcID != 0) return false;
 //
-//    if(dstID == NODE_1) return true;
+//    if (dstID == NODE_1) return true;
 //    else return false;
 //    printf("filter.\n");
-    return true;
+	return true;
 }
 
-static dump_all_fastq() {
+static dump_all_fastq()
+{
+	FastQDump(stderr, 0);
 
-    FastQDump(stderr, 0);
+	struct FastQModuleMsgStatInfo buffer[32];
+	unsigned int num = 0;
+	bool ret = FastQMsgStatInfo(buffer, 32, &num, moduleID_filter_fn);
 
-    struct FastQModuleMsgStatInfo buffer[32];
-    unsigned int num = 0;
-    bool ret = FastQMsgStatInfo(buffer, 32, &num, moduleID_filter_fn);
-//        sleep(1);
-//        printf("statistics. ret = %d, %d\n", ret, num);
-
-    if(num) {
-        printf( "\t SRC -> DST           Enqueue           Dequeue\r\n");
-        printf( "\t ----------------------------------------------------\r\n");
-    }
-    int i;
-    for(i=0;i<num;i++) {
-
-        printf( "\t %3ld -> %3ld:  %16ld %16ld\r\n",
-                buffer[i].src_module, buffer[i].dst_module, buffer[i].enqueue, buffer[i].dequeue);
-    }
+	if (num) {
+		printf( "\t SRC -> DST           Enqueue           Dequeue\r\n");
+		printf( "\t ----------------------------------------------------\r\n");
+	}
+	int i;
+	for (i = 0;i < num;i++) {
+		printf( "\t %3ld -> %3ld:  %16ld %16ld\r\n",
+			buffer[i].src_module, buffer[i].dst_module,
+			buffer[i].enqueue, buffer[i].dequeue);
+	}
 }

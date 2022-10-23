@@ -1,10 +1,10 @@
-/**********************************************************************************************************************\
+/******************************************************************************\
 *  文件： test-3.c
 *  介绍： 低时延队列 多入单出队列 通知+轮询接口测试例
 *  作者： 荣涛
 *  日期：
 *       2021年2月2日
-\**********************************************************************************************************************/
+\******************************************************************************/
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,12 +20,12 @@
 #define NR_PROCESSOR sysconf(_SC_NPROCESSORS_ONLN)
 
 enum {
-    MSGCODE_0,
-    MSGCODE_1,
-    MSGCODE_2,
-    MSGCODE_3,
-    MSGCODE_4,
-    MSGCODE_MAX,
+	MSGCODE_0,
+	MSGCODE_1,
+	MSGCODE_2,
+	MSGCODE_3,
+	MSGCODE_4,
+	MSGCODE_MAX,
 };
 
 uint64_t latency_total = 0;
@@ -38,336 +38,331 @@ uint64_t msg_subcode_statistic[MSGCODE_MAX] = {0};
 uint64_t msg_src_statistic[NODE_NUM] = {0};
 uint64_t api_send_fail_statistic[4] = {0};
 
-
 test_msgs_t *test_msgs[NODE_NUM] = {NULL};
 
-
-void *enqueue_task(void*arg){
-    int i =0;
-    bool ret;
-    struct enqueue_arg *parg = (struct enqueue_arg *)arg;
-    reset_self_cpuset(parg->cpu_list);
-    test_msgs_t *ptest_msg = parg->msgs;
-    test_msgs_t *pmsg;
-
-    unsigned long send_cnt = 0;
-    unsigned long srcModuleID = parg->srcModuleId;
-    unsigned long dstModuleId = parg->dstModuleId;
-
-    while(1) {
-        pmsg = &ptest_msg[i%TEST_NUM];
-        pmsg->msgType = i%MSGCODE_MAX;
-        pmsg->msgCode = i%MSGCODE_MAX;
-        pmsg->msgSubCode = i%MSGCODE_MAX;
-        pmsg->latency = RDTSC();
-        unsigned long addr = (unsigned long)pmsg;
-        unsigned long msgType = pmsg->msgType;
-        unsigned long msgCode = pmsg->msgCode;
-        unsigned long msgSubCode = pmsg->msgSubCode;
-        switch(i%4) {
-            case 0:
-                pmsg->msgCode = MSGCODE_1;
-                pmsg->msgSubCode = MSGCODE_1;
-                ret = FastQSend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
-                api_send_fail_statistic[0] += ret?0:1;
-                break;
-            case 1:
-                pmsg->msgCode = MSGCODE_2;
-                pmsg->msgSubCode = MSGCODE_2;
-                ret = FastQTrySend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
-                api_send_fail_statistic[1] += ret?0:1;
-                break;
-            case 2:
-                pmsg->msgCode = MSGCODE_3;
-                pmsg->msgSubCode = MSGCODE_3;
-                ret = FastQSendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
-                api_send_fail_statistic[2] += ret?0:1;
-                break;
-            case 3:
-                pmsg->msgCode = MSGCODE_4;
-                pmsg->msgSubCode = MSGCODE_4;
-                ret = FastQTrySendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
-                api_send_fail_statistic[3] += ret?0:1;
-                break;
-        }
-        i = ret?(i+1):i;
-        if(!ret) send_failed++;
-
-        if(ret) {
-//            printf("send: %x,(%x), latency = %ld , ret = %d\n", pmsg->magic, TEST_MSG_MAGIC, pmsg->latency, ret);
-//            sleep(1);
-            send_cnt++;
-        }
-
-        if(send_cnt % 5000000 == 0) {
-            printf("enqueue sleep(). send total %ld, failed %ld\n", send_cnt, send_failed);
-            sleep(pmsg->latency%5);
-        }
-    }
-    assert(0);
-    pthread_exit(NULL);
-}
-
-
-void handler_test_msg(unsigned long src, unsigned long dst,unsigned long type, unsigned long code, unsigned long subcode, void* msg, size_t size)
+void *enqueue_task(void*arg)
 {
-    unsigned long addr =  *(unsigned long*)msg;
-    test_msgs_t *pmsg;
+	int i =0;
+	bool ret;
+	struct enqueue_arg *parg = (struct enqueue_arg *)arg;
+	reset_self_cpuset(parg->cpu_list);
+	test_msgs_t *ptest_msg = parg->msgs;
+	test_msgs_t *pmsg;
 
+	unsigned long send_cnt = 0;
+	unsigned long srcModuleID = parg->srcModuleId;
+	unsigned long dstModuleId = parg->dstModuleId;
 
-    pmsg = (test_msgs_t *)addr;
-    latency_total += RDTSC() - pmsg->latency;
-//    printf("recv: %x,(%x), latency = %ld, %ld, \n", pmsg->magic, TEST_MSG_MAGIC, pmsg->latency, total_msgs);
+	while (1) {
+		pmsg = &ptest_msg[i%TEST_NUM];
+		pmsg->msgType = i%MSGCODE_MAX;
+		pmsg->msgCode = i%MSGCODE_MAX;
+		pmsg->msgSubCode = i%MSGCODE_MAX;
+		pmsg->latency = RDTSC();
+		unsigned long addr = (unsigned long)pmsg;
+		unsigned long msgType = pmsg->msgType;
+		unsigned long msgCode = pmsg->msgCode;
+		unsigned long msgSubCode = pmsg->msgSubCode;
 
-    pmsg->latency = 0;
-    if(dst != NODE_1) {
-        assert(0 && "Wrong dst moduleID.");
-    }
+		switch (i%4) {
+		case 0:
+			pmsg->msgCode = MSGCODE_1;
+			pmsg->msgSubCode = MSGCODE_1;
+			ret = FastQSend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+			api_send_fail_statistic[0] += ret?0:1;
+			break;
+		case 1:
+			pmsg->msgCode = MSGCODE_2;
+			pmsg->msgSubCode = MSGCODE_2;
+			ret = FastQTrySend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+			api_send_fail_statistic[1] += ret?0:1;
+			break;
+		case 2:
+			pmsg->msgCode = MSGCODE_3;
+			pmsg->msgSubCode = MSGCODE_3;
+			ret = FastQSendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+			api_send_fail_statistic[2] += ret?0:1;
+			break;
+		case 3:
+			pmsg->msgCode = MSGCODE_4;
+			pmsg->msgSubCode = MSGCODE_4;
+			ret = FastQTrySendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+			api_send_fail_statistic[3] += ret?0:1;
+			break;
+		}
 
-    if(pmsg->magic != TEST_MSG_MAGIC && pmsg->magic != TEST_MSG_MAGIC*2) {
-        error_msgs++;
-    }
-    if(pmsg->magic == TEST_MSG_MAGIC*2) {
-//        printf("Get Self msg.\n");
-        msg_src_statistic[NODE_1]++;
-        return;
-    }
+		i = ret ? (i+1) : i;
 
+		if (!ret) send_failed++;
 
-    total_msgs++;
-    msg_type_statistic[type]++;
-    msg_code_statistic[code]++;
-    msg_subcode_statistic[subcode]++;
-    msg_src_statistic[src]++;
+		if (ret) {
+			send_cnt++;
+		}
 
-    if(total_msgs % 400000 == 0) {
-        printf("dequeue. per msgs \033[1;31m%lf ns\033[m, msgs (total %ld,  err %ld).\n"\
-                "                               Type[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
-                "                               Code[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
-                "                            SubCode[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
-                "                                Src[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
-                "      FailSend[Tx,TryTx,TxN,TryTxN][%8ld,%8ld,%8ld,%8ld]\n",
-                latency_total*1.0/400000/3000000000*1000000000,
-                total_msgs,
-                error_msgs,
-                msg_type_statistic[MSGCODE_0],
-                msg_type_statistic[MSGCODE_1],
-                msg_type_statistic[MSGCODE_2],
-                msg_type_statistic[MSGCODE_3],
-                msg_type_statistic[MSGCODE_4],
-
-                msg_code_statistic[MSGCODE_0],
-                msg_code_statistic[MSGCODE_1],
-                msg_code_statistic[MSGCODE_2],
-                msg_code_statistic[MSGCODE_3],
-                msg_code_statistic[MSGCODE_4],
-
-                msg_subcode_statistic[MSGCODE_0],
-                msg_subcode_statistic[MSGCODE_1],
-                msg_subcode_statistic[MSGCODE_2],
-                msg_subcode_statistic[MSGCODE_3],
-                msg_subcode_statistic[MSGCODE_4],
-
-                msg_src_statistic[NODE_1],
-                msg_src_statistic[NODE_2],
-                msg_src_statistic[NODE_3],
-                msg_src_statistic[NODE_4],
-                msg_src_statistic[NODE_5],
-
-                api_send_fail_statistic[0],
-                api_send_fail_statistic[1],
-                api_send_fail_statistic[2],
-                api_send_fail_statistic[3]
-                );
-        latency_total = 0;
-
-        /* 自己向自己发送消息 */
-        static test_msgs_t msg = {
-            .magic = TEST_MSG_MAGIC*2,
-            };
-
-        msg.latency = RDTSC();
-        unsigned long addr = (unsigned long)&msg;
-        FastQSend(NODE_1, NODE_1, 0, 0, 0, &addr, sizeof(unsigned long));
-    }
-
+		if (send_cnt % 5000000 == 0) {
+			printf("enqueue sleep(). send total %ld, failed %ld\n", send_cnt, send_failed);
+			sleep(pmsg->latency%5);
+		}
+	}
+	assert(0);
+	pthread_exit(NULL);
 }
 
-void *dequeue_task(void*arg) {
-    struct dequeue_arg *parg = (struct dequeue_arg*)arg;
-    reset_self_cpuset(parg->cpu_list);
+void handler_test_msg(unsigned long src, unsigned long dst,
+		unsigned long type, unsigned long code, unsigned long subcode,
+		void* msg, size_t size)
+{
+	unsigned long addr =  *(unsigned long*)msg;
+	test_msgs_t *pmsg;
 
-    FastQRecvByName( ModuleName[parg->srcModuleId], handler_test_msg);
-    printf("Dequeue task exit.\n");
-    pthread_exit(NULL);
+	pmsg = (test_msgs_t *)addr;
+	latency_total += RDTSC() - pmsg->latency;
+
+	pmsg->latency = 0;
+	if (dst != NODE_1) {
+		assert(0 && "Wrong dst moduleID.");
+	}
+
+	if (pmsg->magic != TEST_MSG_MAGIC && pmsg->magic != TEST_MSG_MAGIC*2) {
+		error_msgs++;
+	}
+	if (pmsg->magic == TEST_MSG_MAGIC*2) {
+		msg_src_statistic[NODE_1]++;
+		return;
+	}
+
+	total_msgs++;
+	msg_type_statistic[type]++;
+	msg_code_statistic[code]++;
+	msg_subcode_statistic[subcode]++;
+	msg_src_statistic[src]++;
+
+	if(total_msgs % 400000 == 0) {
+		printf(
+			"dequeue. per msgs \033[1;31m%lf ns\033[m, msgs (total %ld,  err %ld).\n"\
+			"                               Type[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
+			"                               Code[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
+			"                            SubCode[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
+			"                                Src[%8ld,%8ld,%8ld,%8ld,%8ld]\n"\
+			"      FailSend[Tx,TryTx,TxN,TryTxN][%8ld,%8ld,%8ld,%8ld]\n",
+			latency_total*1.0/400000/3000000000*1000000000,
+			total_msgs,
+			error_msgs,
+			msg_type_statistic[MSGCODE_0],
+			msg_type_statistic[MSGCODE_1],
+			msg_type_statistic[MSGCODE_2],
+			msg_type_statistic[MSGCODE_3],
+			msg_type_statistic[MSGCODE_4],
+
+			msg_code_statistic[MSGCODE_0],
+			msg_code_statistic[MSGCODE_1],
+			msg_code_statistic[MSGCODE_2],
+			msg_code_statistic[MSGCODE_3],
+			msg_code_statistic[MSGCODE_4],
+
+			msg_subcode_statistic[MSGCODE_0],
+			msg_subcode_statistic[MSGCODE_1],
+			msg_subcode_statistic[MSGCODE_2],
+			msg_subcode_statistic[MSGCODE_3],
+			msg_subcode_statistic[MSGCODE_4],
+
+			msg_src_statistic[NODE_1],
+			msg_src_statistic[NODE_2],
+			msg_src_statistic[NODE_3],
+			msg_src_statistic[NODE_4],
+			msg_src_statistic[NODE_5],
+
+			api_send_fail_statistic[0],
+			api_send_fail_statistic[1],
+			api_send_fail_statistic[2],
+			api_send_fail_statistic[3]
+			);
+		latency_total = 0;
+
+		/* 自己向自己发送消息 */
+		static test_msgs_t msg = {
+			.magic = TEST_MSG_MAGIC*2,
+		};
+
+		msg.latency = RDTSC();
+		unsigned long addr = (unsigned long)&msg;
+		FastQSend(NODE_1, NODE_1, 0, 0, 0, &addr, sizeof(unsigned long));
+	}
 }
 
+void *dequeue_task(void*arg)
+{
+	struct dequeue_arg *parg = (struct dequeue_arg*)arg;
+	reset_self_cpuset(parg->cpu_list);
 
-pthread_t new_enqueue_task(unsigned long moduleId, unsigned long dstModuleId, char *moduleName,
-                               unsigned long *RxArray, int nRx,
-                               unsigned long *TxArray, int nTx,
-                               size_t maxMsg, size_t msgSize,
-                               const char *cpulist, bool new_task) {
-    pthread_t task = 0;
-    unsigned int i =0;
-
-    mod_set rxset, txset;
-    MOD_ZERO(&rxset);
-    MOD_ZERO(&txset);
-    for(i=0; i<nRx; i++) {
-        MOD_SET(RxArray[i], &rxset);
-    }
-    for(i=0; i<nTx; i++) {
-        MOD_SET(TxArray[i], &txset);
-    }
-
-    FastQCreateModule(moduleId, &rxset, &txset, maxMsg, msgSize);
-    if(moduleName)
-        FastQAttachName(moduleId, ModuleName[moduleId]);
-
-    test_msgs_t *test_msg = NULL;
-
-    if(!test_msgs[moduleId]) {
-        test_msgs[moduleId] = (test_msgs_t *)malloc(sizeof(test_msgs_t)*TEST_NUM);
-        test_msg = test_msgs[moduleId];
-        for(i=0;i<TEST_NUM;i++) {
-            test_msg[i].magic = TEST_MSG_MAGIC;
-            test_msg[i].value = 0xff00000000000000 + i+1;
-        }
-    } else {
-        test_msg = test_msgs[moduleId];
-    }
-
-    if(new_task) {
-        struct enqueue_arg *enqueueArg = malloc(sizeof(struct enqueue_arg));
-
-        enqueueArg->srcModuleId = moduleId;
-        enqueueArg->dstModuleId = dstModuleId;
-        enqueueArg->cpu_list = strdup(cpulist);
-        enqueueArg->msgs = test_msg;
-
-        pthread_create(&task, NULL, enqueue_task, enqueueArg);
-    	pthread_setname_np(task, moduleName?moduleName:"enqueue");
-    }
-
-    return task;
+	FastQRecvByName( ModuleName[parg->srcModuleId], handler_test_msg);
+	printf("Dequeue task exit.\n");
+	pthread_exit(NULL);
 }
 
+pthread_t new_enqueue_task(unsigned long moduleId,
+			unsigned long dstModuleId, char *moduleName,
+			unsigned long *RxArray, int nRx,
+			unsigned long *TxArray, int nTx,
+			size_t maxMsg, size_t msgSize,
+			const char *cpulist, bool new_task)
+{
+	pthread_t task = 0;
+	unsigned int i =0;
 
+	mod_set rxset, txset;
+	MOD_ZERO(&rxset);
+	MOD_ZERO(&txset);
+
+	for (i = 0; i < nRx; i++) {
+		MOD_SET(RxArray[i], &rxset);
+	}
+	for (i=0; i < nTx; i++) {
+		MOD_SET(TxArray[i], &txset);
+	}
+
+	FastQCreateModule(moduleId, &rxset, &txset, maxMsg, msgSize);
+	if (moduleName)
+		FastQAttachName(moduleId, ModuleName[moduleId]);
+
+	test_msgs_t *test_msg = NULL;
+
+	if (!test_msgs[moduleId]) {
+		test_msgs[moduleId] = (test_msgs_t *)malloc(sizeof(test_msgs_t)*TEST_NUM);
+		test_msg = test_msgs[moduleId];
+		for(i=0;i<TEST_NUM;i++) {
+			test_msg[i].magic = TEST_MSG_MAGIC;
+			test_msg[i].value = 0xff00000000000000 + i+1;
+		}
+	} else {
+		test_msg = test_msgs[moduleId];
+	}
+
+	if (new_task) {
+		struct enqueue_arg *enqueueArg = malloc(sizeof(struct enqueue_arg));
+
+		enqueueArg->srcModuleId = moduleId;
+		enqueueArg->dstModuleId = dstModuleId;
+		enqueueArg->cpu_list = strdup(cpulist);
+		enqueueArg->msgs = test_msg;
+
+		pthread_create(&task, NULL, enqueue_task, enqueueArg);
+		pthread_setname_np(task, moduleName?moduleName:"enqueue");
+	}
+
+	return task;
+}
 
 static pthread_t new_dequeue_task(unsigned long moduleId, char *moduleName,
-                               unsigned long *RxArray, int nRx,
-                               unsigned long *TxArray, int nTx,
-                               size_t maxMsg, size_t msgSize,
-                               const char *cpulist) {
-    pthread_t task;
-    int i;
-    struct dequeue_arg *taskArg = NULL;
+				unsigned long *RxArray, int nRx,
+				unsigned long *TxArray, int nTx,
+				size_t maxMsg, size_t msgSize,
+				const char *cpulist)
+{
+	pthread_t task;
+	int i;
+	struct dequeue_arg *taskArg = NULL;
 
-    mod_set rxset, txset;
-    MOD_ZERO(&rxset);
-    MOD_ZERO(&txset);
+	mod_set rxset, txset;
+	MOD_ZERO(&rxset);
+	MOD_ZERO(&txset);
 
-    for(i=0; i<nRx; i++) {
-        MOD_SET(RxArray[i], &rxset);
-    }
-    for(i=0; i<nTx; i++) {
-        MOD_SET(TxArray[i], &txset);
-    }
+	for (i = 0; i < nRx; i++) {
+		MOD_SET(RxArray[i], &rxset);
+	}
+	for (i = 0; i < nTx; i++) {
+		MOD_SET(TxArray[i], &txset);
+	}
 
-    FastQCreateModule(moduleId, NULL, &txset, maxMsg, msgSize);
+	FastQCreateModule(moduleId, NULL, &txset, maxMsg, msgSize);
 
-    if(moduleName)
-        FastQAttachName(moduleId, ModuleName[moduleId]);
+	if(moduleName)
+		FastQAttachName(moduleId, ModuleName[moduleId]);
 
-    taskArg = malloc(sizeof(struct dequeue_arg));
+	taskArg = malloc(sizeof(struct dequeue_arg));
 
-    taskArg->cpu_list = strdup(cpulist);
-    taskArg->srcModuleId = moduleId;
+	taskArg->cpu_list = strdup(cpulist);
+	taskArg->srcModuleId = moduleId;
 
-    pthread_create(&task, NULL, dequeue_task, taskArg);
+	pthread_create(&task, NULL, dequeue_task, taskArg);
 	pthread_setname_np(task, moduleName?moduleName:"dequeue");
 
-    return task;
+	return task;
 }
 
-
-int sig_handler(int signum) {
-
+int sig_handler(int signum)
+{
    switch(signum) {
-       case SIGINT:
-           FastQDump(NULL, NODE_1);
-           exit(1);
-           break;
-       case SIGALRM:
-           dump_all_fastq();
-           break;
+	   case SIGINT:
+			FastQDump(NULL, NODE_1);
+			exit(1);
+			break;
+	   case SIGALRM:
+			dump_all_fastq();
+			break;
    }
 }
 
-pthread_t start_enqueue(int node, size_t msgNum, bool new_task) {
-    unsigned long TXarr[] = {NODE_1};
-    return new_enqueue_task(node, NODE_1, ModuleName[node],
-                                    NULL, 0, TXarr, 0,
-                                    msgNum, sizeof(long),
-                                    global_cpu_lists[(node-1)%NR_PROCESSOR], new_task);
-
+pthread_t start_enqueue(int node, size_t msgNum, bool new_task)
+{
+	unsigned long TXarr[] = {NODE_1};
+	return new_enqueue_task(node, NODE_1, ModuleName[node],
+			NULL, 0, TXarr, 0,
+			msgNum, sizeof(long),
+			global_cpu_lists[(node-1)%NR_PROCESSOR], new_task);
 }
 
 int main()
 {
-    pthread_t dequeueTask;
-    pthread_t enqueueTask;
-    unsigned long i;
-    size_t msgNum = 8;
-    struct itimerval sa;
-    sa.it_value.tv_sec = 100;
-    sa.it_value.tv_usec = 0;
-    sa.it_interval.tv_sec = 100;
-    sa.it_interval.tv_usec = 0;
+	pthread_t dequeueTask;
+	pthread_t enqueueTask;
+	unsigned long i;
+	size_t msgNum = 8;
+	struct itimerval sa;
+	sa.it_value.tv_sec = 100;
+	sa.it_value.tv_usec = 0;
+	sa.it_interval.tv_sec = 100;
+	sa.it_interval.tv_usec = 0;
 
-    signal(SIGINT, sig_handler);
-    signal(SIGALRM, sig_handler);
-    setitimer(ITIMER_REAL,&sa,NULL);
+	signal(SIGINT, sig_handler);
+	signal(SIGALRM, sig_handler);
+	setitimer(ITIMER_REAL,&sa,NULL);
 
-    dequeueTask = new_dequeue_task(NODE_1, ModuleName[NODE_1],
-                                    NULL, 0, NULL, 0, msgNum,
-                                    sizeof(long), global_cpu_lists[(NODE_1-1)%NR_PROCESSOR]);
+	dequeueTask = new_dequeue_task(NODE_1, ModuleName[NODE_1],
+			NULL, 0, NULL, 0, msgNum,
+			sizeof(long), global_cpu_lists[(NODE_1-1)%NR_PROCESSOR]);
 
-    unsigned long start_node_id = NODE_2;
-    unsigned long end_node_id = NODE_4;
+	unsigned long start_node_id = NODE_2;
+	unsigned long end_node_id = NODE_4;
 
-    for(i=start_node_id; i<=end_node_id; i++) {
-        enqueueTask = start_enqueue(i, msgNum, true);
-    }
+	for (i = start_node_id; i <= end_node_id; i++) {
+		enqueueTask = start_enqueue(i, msgNum, true);
+	}
 
 	pthread_setname_np(pthread_self(), "test-1");
 
 
-    /* 动态删除建立发送队列 */
-    while(1) {
-        sleep(1);
+	/* 动态删除建立发送队列 */
+	while (1) {
+		sleep(1);
 
-        for(i=start_node_id; i<=end_node_id; i++) {
-            printf(" Delete Q %s\n", ModuleName[i]);
-            FastQDeleteModule(i);
-        }
-        sleep(1);
-        for(i=start_node_id; i<=end_node_id; i++) {
-            printf(" Create Q %s\n", ModuleName[i]);
-            start_enqueue(i, msgNum, false);
-        }
+		for (i = start_node_id; i <= end_node_id; i++) {
+			printf(" Delete Q %s\n", ModuleName[i]);
+			FastQDeleteModule(i);
+		}
 
-        sleep(5);
-    }
+		sleep(1);
 
+		for (i = start_node_id; i <= end_node_id; i++) {
+			printf(" Create Q %s\n", ModuleName[i]);
+			start_enqueue(i, msgNum, false);
+		}
 
-    pthread_join(dequeueTask, NULL);
-    pthread_join(enqueueTask, NULL);
+		sleep(5);
+	}
 
-    return EXIT_SUCCESS;
+	pthread_join(dequeueTask, NULL);
+	pthread_join(enqueueTask, NULL);
+
+	return EXIT_SUCCESS;
 }
-
-
-
-
