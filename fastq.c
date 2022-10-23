@@ -11,7 +11,7 @@
 *       2021年2月3日 统计类接口 和 低时延接口并存
 *       2021年3月2日 为满足实时内核，添加 select()，同时支持 epoll()
 *       2021年3月3日 统计类接口 和 低时延接口并存
-*       2021年3月4日 VOS_FastQMsgStatInfo 接口
+*       2021年3月4日 FastQMsgStatInfo 接口
 *       2021年4月7日 添加模块掩码，限制底层创建 fd 数量
 *       2021年4月19日 获取当前队列消息数    (需要开启统计功能 _FASTQ_STATS )
 *                     动态添加 发送接收 set
@@ -489,7 +489,7 @@ __fastq_destroy_ring(struct FastQModule *pmodule, const unsigned long src, const
 
 
 void
-FastQCreateModule(const unsigned long module_id,
+FastQCreateModuleDump(const unsigned long module_id,
                      const mod_set *rxset, const mod_set *txset,
                      const unsigned int ring_size, const unsigned int msg_size,
                             const char *_file, const char *_func, const int _line) {

@@ -68,25 +68,25 @@ void *enqueue_task(void*arg){
             case 0:
                 pmsg->msgCode = MSGCODE_1;
                 pmsg->msgSubCode = MSGCODE_1;
-                ret = VOS_FastQSend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+                ret = FastQSend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
                 api_send_fail_statistic[0] += ret?0:1;
                 break;
             case 1:
                 pmsg->msgCode = MSGCODE_2;
                 pmsg->msgSubCode = MSGCODE_2;
-                ret = VOS_FastQTrySend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+                ret = FastQTrySend(srcModuleID, dstModuleId, msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
                 api_send_fail_statistic[1] += ret?0:1;
                 break;
             case 2:
                 pmsg->msgCode = MSGCODE_3;
                 pmsg->msgSubCode = MSGCODE_3;
-                ret = VOS_FastQSendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+                ret = FastQSendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
                 api_send_fail_statistic[2] += ret?0:1;
                 break;
             case 3:
                 pmsg->msgCode = MSGCODE_4;
                 pmsg->msgSubCode = MSGCODE_4;
-                ret = VOS_FastQTrySendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
+                ret = FastQTrySendByName(ModuleName[srcModuleID], ModuleName[dstModuleId], msgType, msgCode, msgSubCode, &addr, sizeof(unsigned long));
                 api_send_fail_statistic[3] += ret?0:1;
                 break;
         }
@@ -188,7 +188,7 @@ void handler_test_msg(unsigned long src, unsigned long dst,unsigned long type, u
 
         msg.latency = RDTSC();
         unsigned long addr = (unsigned long)&msg;
-        VOS_FastQSend(NODE_1, NODE_1, 0, 0, 0, &addr, sizeof(unsigned long));
+        FastQSend(NODE_1, NODE_1, 0, 0, 0, &addr, sizeof(unsigned long));
     }
 
 }
@@ -197,7 +197,7 @@ void *dequeue_task(void*arg) {
     struct dequeue_arg *parg = (struct dequeue_arg*)arg;
     reset_self_cpuset(parg->cpu_list);
 
-    VOS_FastQRecvByName( ModuleName[parg->srcModuleId], handler_test_msg);
+    FastQRecvByName( ModuleName[parg->srcModuleId], handler_test_msg);
     printf("Dequeue task exit.\n");
     pthread_exit(NULL);
 }
@@ -221,9 +221,9 @@ pthread_t new_enqueue_task(unsigned long moduleId, unsigned long dstModuleId, ch
         MOD_SET(TxArray[i], &txset);
     }
 
-    VOS_FastQCreateModule(moduleId, &rxset, &txset, maxMsg, msgSize);
+    FastQCreateModule(moduleId, &rxset, &txset, maxMsg, msgSize);
     if(moduleName)
-        VOS_FastQAttachName(moduleId, ModuleName[moduleId]);
+        FastQAttachName(moduleId, ModuleName[moduleId]);
 
     test_msgs_t *test_msg = NULL;
 
@@ -275,10 +275,10 @@ static pthread_t new_dequeue_task(unsigned long moduleId, char *moduleName,
         MOD_SET(TxArray[i], &txset);
     }
 
-    VOS_FastQCreateModule(moduleId, NULL, &txset, maxMsg, msgSize);
+    FastQCreateModule(moduleId, NULL, &txset, maxMsg, msgSize);
 
     if(moduleName)
-        VOS_FastQAttachName(moduleId, ModuleName[moduleId]);
+        FastQAttachName(moduleId, ModuleName[moduleId]);
 
     taskArg = malloc(sizeof(struct dequeue_arg));
 
@@ -296,7 +296,7 @@ int sig_handler(int signum) {
 
    switch(signum) {
        case SIGINT:
-           VOS_FastQDump(NULL, NODE_1);
+           FastQDump(NULL, NODE_1);
            exit(1);
            break;
        case SIGALRM:
@@ -350,7 +350,7 @@ int main()
 
         for(i=start_node_id; i<=end_node_id; i++) {
             printf(" Delete Q %s\n", ModuleName[i]);
-            VOS_FastQDeleteModule(i);
+            FastQDeleteModule(i);
         }
         sleep(1);
         for(i=start_node_id; i<=end_node_id; i++) {

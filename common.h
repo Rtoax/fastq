@@ -103,7 +103,7 @@ static dump_all_fastq() {
 
     struct FastQModuleMsgStatInfo buffer[32];
     unsigned int num = 0;
-    bool ret = VOS_FastQMsgStatInfo(buffer, 32, &num, moduleID_filter_fn);
+    bool ret = FastQMsgStatInfo(buffer, 32, &num, moduleID_filter_fn);
 //        sleep(1);
 //        printf("statistics. ret = %d, %d\n", ret, num);
 
