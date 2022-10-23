@@ -1,4 +1,4 @@
-/**********************************************************************************************************************\
+/******************************************************************************\
 *  文件： fastq.h
 *  介绍： 低时延队列
 *  作者： 荣涛
@@ -21,13 +21,12 @@
 *   FastQAddSet         动态添加 发送接收 set
 *
 *
-\**********************************************************************************************************************/
+\******************************************************************************/
 #ifndef __fAStMQ_H
 #define __fAStMQ_H 1
 
 #include <stdio.h>
 #include <stdbool.h>
-
 
 
 #ifdef MODULE_ID_MAX // moduleID 最大模块索引值
@@ -46,25 +45,25 @@
 
 typedef long int __mod_mask;
 typedef struct {
-    __mod_mask __mod[__MOD_SETSIZE/__NMOD];
+	__mod_mask __mod[__MOD_SETSIZE/__NMOD];
 #define __MOD(set) ((set)->__mod)
 #define __MOD_SET_INITIALIZER    {0}
 }__attribute__((aligned(64))) __mod_set;
 
 
 #define __MOD_ZERO(s) \
-    do {    \
-        unsigned int __i;   \
-        __mod_set *__arr = (s);  \
-        for (__i = 0; __i < sizeof (__mod_set) / sizeof (__mod_mask); ++__i)    \
-            __MOD (__arr)[__i] = 0;  \
-    } while (0)
+	do {    \
+		unsigned int __i;   \
+		__mod_set *__arr = (s);  \
+		for (__i = 0; __i < sizeof (__mod_set) / sizeof (__mod_mask); ++__i)  \
+			__MOD (__arr)[__i] = 0;  \
+	} while (0)
 #define __MOD_SET(d, s) \
-    ((void) (__MOD (s)[__MOD_ELT(d)] |= __MOD_MASK(d)))
+	((void) (__MOD (s)[__MOD_ELT(d)] |= __MOD_MASK(d)))
 #define __MOD_CLR(d, s) \
-    ((void) (__MOD (s)[__MOD_ELT(d)] &= ~ __MOD_MASK(d)))
+	((void) (__MOD (s)[__MOD_ELT(d)] &= ~ __MOD_MASK(d)))
 #define __MOD_ISSET(d, s) \
-    ((__MOD (s)[__MOD_ELT (d)] & __MOD_MASK (d)) != 0)
+	((__MOD (s)[__MOD_ELT (d)] & __MOD_MASK (d)) != 0)
 
 
 #define mod_set                  __mod_set
@@ -84,7 +83,6 @@ typedef struct {
  */
 #define FastQTmpModuleID    0
 
-
 /**
  *  FastQModuleMsgStatInfo - 统计信息
  *
@@ -94,10 +92,10 @@ typedef struct {
  *  dequeue     从 src_module 发往 dst_module 的统计， dst_module 已接收的消息数
  */
 struct FastQModuleMsgStatInfo {
-    unsigned long src_module;
-    unsigned long dst_module;
-    unsigned long enqueue;
-    unsigned long dequeue;
+	unsigned long src_module;
+	unsigned long dst_module;
+	unsigned long enqueue;
+	unsigned long dequeue;
 };
 
 
@@ -113,9 +111,9 @@ struct FastQModuleMsgStatInfo {
  *  param[in]   sz      接收消息大小，与 FastQCreate (..., msg_size) 保持一致
  */
 typedef void (*fq_msg_handler_t)(unsigned long src, unsigned long dst,\
-                                 unsigned long type, unsigned long code, unsigned long subcode, \
-                                 void*msg, size_t sz);
-
+					unsigned long type, unsigned long code, \
+					unsigned long subcode, \
+					void*msg, size_t sz);
 
 /**
  *  fq_module_filter_t - 根据目的和源模块ID进行过滤
@@ -126,9 +124,6 @@ typedef void (*fq_msg_handler_t)(unsigned long src, unsigned long dst,\
  *  当 fq_module_filter_t 返回 true 时，该 源 到 目的 的消息队列将计入统计
  */
 typedef bool (*fq_module_filter_t)(unsigned long srcID, unsigned long dstID);
-
-
-
 
 
 /**
@@ -142,8 +137,8 @@ typedef bool (*fq_module_filter_t)(unsigned long srcID, unsigned long dstID);
  */
 void
 FastQCreateModule(const unsigned long moduleID,
-                         const mod_set *rxset, const mod_set *txset,
-                         const unsigned int msgMax, const unsigned int msgSize);
+			const mod_set *rxset, const mod_set *txset,
+			const unsigned int msgMax, const unsigned int msgSize);
 
 
 /**
@@ -154,7 +149,6 @@ FastQCreateModule(const unsigned long moduleID,
  */
 bool
 FastQAttachName(const unsigned long moduleID, const char *name);
-
 
 /**
  *  FastQDeleteModule - 销毁消息队列
@@ -169,8 +163,6 @@ FastQAttachName(const unsigned long moduleID, const char *name);
 bool
 FastQDeleteModule(const unsigned long moduleID);
 
-
-
 /**
  *  FastQAddSet - 注册消息队列
  *
@@ -182,8 +174,7 @@ FastQDeleteModule(const unsigned long moduleID);
  */
 bool
 FastQAddSet(const unsigned long moduleID,
-                    const mod_set *rxset, const mod_set *txset);
-
+					const mod_set *rxset, const mod_set *txset);
 
 /**
  *  FastQDump - 显示信息
@@ -212,9 +203,8 @@ FastQDumpAllModule(FILE*fp);
  */
 
 bool
-FastQMsgStatInfo(struct FastQModuleMsgStatInfo *buf, unsigned int buf_mod_size, unsigned int *num,
-                fq_module_filter_t filter);
-
+FastQMsgStatInfo(struct FastQModuleMsgStatInfo *buf, unsigned int buf_mod_size,
+				unsigned int *num, fq_module_filter_t filter);
 
 /**
  *  FastQSend - 发送消息（轮询直至成功发送）
@@ -232,8 +222,9 @@ FastQMsgStatInfo(struct FastQModuleMsgStatInfo *buf, unsigned int buf_mod_size, 
  *  注意：from 和 to 需要使用 FastQCreateModule 注册后使用
  */
 bool
-FastQSend(unsigned int from, unsigned int to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
-                const void *msg, size_t size);
+FastQSend(unsigned int from, unsigned int to, unsigned long msgType,
+			unsigned long msgCode, unsigned long msgSubCode,
+			const void *msg, size_t size);
 
 /**
  *  FastQSendByName - 发送消息（轮询直至成功发送）
@@ -251,9 +242,9 @@ FastQSend(unsigned int from, unsigned int to, unsigned long msgType, unsigned lo
  *  注意：from 和 to 需要使用 FastQCreateModule 注册后使用
  */
 bool
-FastQSendByName(const char *from, const char *to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
-                 const void *msg, size_t size);
-
+FastQSendByName(const char *from, const char *to, unsigned long msgType,
+				unsigned long msgCode, unsigned long msgSubCode,
+				const void *msg, size_t size);
 
 /**
  *  FastQTrySend - 发送消息（尝试向队列中插入，当队列满是直接返回false）
@@ -271,9 +262,9 @@ FastQSendByName(const char *from, const char *to, unsigned long msgType, unsigne
  *  注意：from 和 to 需要使用 FastQCreateModule 注册后使用
  */
 bool
-FastQTrySend(unsigned int from, unsigned int to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
-                 const void *msg, size_t size);
-
+FastQTrySend(unsigned int from, unsigned int to, unsigned long msgType,
+			unsigned long msgCode, unsigned long msgSubCode,
+			const void *msg, size_t size);
 
 /**
  *  FastQTrySendByName - 发送消息（尝试发送）
@@ -291,9 +282,9 @@ FastQTrySend(unsigned int from, unsigned int to, unsigned long msgType, unsigned
  *  注意：from 和 to 需要使用 FastQCreateModule 注册后使用
  */
 bool
-FastQTrySendByName(const char *from, const char *to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
-                 const void *msg, size_t size);
-
+FastQTrySendByName(const char *from, const char *to, unsigned long msgType,
+				unsigned long msgCode, unsigned long msgSubCode,
+				const void *msg, size_t size);
 
 /**
  *  FastQRecv - 接收消息
@@ -308,7 +299,6 @@ FastQTrySendByName(const char *from, const char *to, unsigned long msgType, unsi
 bool
 FastQRecv(unsigned int from, fq_msg_handler_t handler);
 
-
 /**
  *  FastQRecvByName - 接收消息
  *
@@ -321,7 +311,6 @@ FastQRecv(unsigned int from, fq_msg_handler_t handler);
  */
 bool
 FastQRecvByName(const char *from, fq_msg_handler_t handler);
-
 
 /**
  *  FastQMsgNum - 获取消息数
@@ -336,32 +325,27 @@ FastQRecvByName(const char *from, fq_msg_handler_t handler);
  *  注意：ID 需要使用 FastQCreateModule 注册后使用
  */
 bool
-FastQMsgNum(unsigned int ID, unsigned long *nr_enqueues, unsigned long *nr_dequeues, unsigned long *nr_currents);
-
-
-
+FastQMsgNum(unsigned int ID, unsigned long *nr_enqueues,
+	unsigned long *nr_dequeues, unsigned long *nr_currents);
 
 
 # define FastQCreateModule(moduleID, rxset, txset, msgMax, msgSize)   \
-             FastQCreateModuleDump(moduleID, rxset, txset, msgMax, msgSize, __FILE__, __func__, __LINE__)
+	FastQCreateModuleDump(moduleID, rxset, txset, msgMax, msgSize, \
+		__FILE__, __func__, __LINE__)
 # define FastQDumpAllModule(fp)                 \
-             FastQDump(fp, 0)
-
+	FastQDump(fp, 0)
 
 
 #pragma GCC diagnostic push
-
 #pragma GCC diagnostic ignored "-Wattributes"
-
 
 void
 FastQCreateModuleDump(const unsigned long moduleID,
-                        const mod_set *rxset, const mod_set *txset,
-                        const unsigned int msgMax, const unsigned int msgSize,
-                            const char *_file, const char *_func, const int _line);
+			const mod_set *rxset, const mod_set *txset,
+			const unsigned int msgMax, const unsigned int msgSize,
+			const char *_file, const char *_func, const int _line);
 
 #pragma GCC diagnostic pop
-
 
 #endif /*<__fAStMQ_H>*/
 
