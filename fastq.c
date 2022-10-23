@@ -156,10 +156,10 @@ struct FastQModule {
 }__cachelinealigned;
 
 
-static uint64_t _unused inline dictSdsCaseHash(const void *key) {
+static uint64_t _unused dictSdsCaseHash(const void *key) {
     return dictGenCaseHashFunction((unsigned char*)key, sdslen((char*)key));
 }
-static void _unused inline dictSdsDestructor(void *privdata, void *val)
+static void _unused dictSdsDestructor(void *privdata, void *val)
 {
     DICT_NOTUSED(privdata);
 
@@ -168,7 +168,7 @@ static void _unused inline dictSdsDestructor(void *privdata, void *val)
 
 /* A case insensitive version used for the command lookup table and other
  * places where case insensitive non binary-safe comparison is needed. */
-static int _unused inline dictSdsKeyCaseCompare(void *privdata, const void *key1,
+static int _unused dictSdsKeyCaseCompare(void *privdata, const void *key1,
         const void *key2)
 {
     DICT_NOTUSED(privdata);
@@ -199,7 +199,7 @@ static void dict_init() {
     dictExpand(dictModuleNameID, FASTQ_ID_MAX);
 }
 
-static void _unused inline dict_register_module(char *name, unsigned long id) {
+static void _unused dict_register_module(char *name, unsigned long id) {
     pthread_spin_lock(&dict_spinlock);
 
     int ret = dictAdd(dictModuleNameID, name, (void*)id);
@@ -209,7 +209,7 @@ static void _unused inline dict_register_module(char *name, unsigned long id) {
 
     pthread_spin_unlock(&dict_spinlock);
 }
-static void _unused inline dict_unregister_module(char *name) {
+static void _unused dict_unregister_module(char *name) {
     pthread_spin_lock(&dict_spinlock);
 
     int ret = dictDelete(dictModuleNameID, name);
@@ -220,7 +220,7 @@ static void _unused inline dict_unregister_module(char *name) {
     pthread_spin_unlock(&dict_spinlock);
 }
 
-static unsigned long inline _unused dict_find_module_id_byname(char *name) {
+static unsigned long _unused dict_find_module_id_byname(char *name) {
     pthread_spin_lock(&dict_spinlock);
     dictEntry *entry = dictFind(dictModuleNameID, name);
     if(unlikely(!entry)) {
@@ -240,14 +240,14 @@ static unsigned long inline _unused dict_find_module_id_byname(char *name) {
 
 
 // 内存屏障
-static void  inline _unused mbarrier() { asm volatile("": : :"memory"); }
+static void  _unused mbarrier() { asm volatile("": : :"memory"); }
 // This version requires SSE capable CPU.
-static void  inline _unused mrwbarrier() { asm volatile("mfence":::"memory"); }
-static void  inline _unused mrbarrier()  { asm volatile("lfence":::"memory"); }
-static void  inline _unused mwbarrier()  { asm volatile("sfence":::"memory"); }
-static void  inline _unused __relax()  { asm volatile ("pause":::"memory"); }
+static void  _unused mrwbarrier() { asm volatile("mfence":::"memory"); }
+static void  _unused mrbarrier()  { asm volatile("lfence":::"memory"); }
+static void  _unused mwbarrier()  { asm volatile("sfence":::"memory"); }
+static void  _unused __relax()  { asm volatile ("pause":::"memory"); }
 
-static inline int _unused
+static int _unused
 atomic64_cmpset(volatile uint64_t *dst, uint64_t exp, uint64_t src) {
 	uint8_t res;
 
@@ -265,17 +265,17 @@ atomic64_cmpset(volatile uint64_t *dst, uint64_t exp, uint64_t src) {
 	return res;
 }
 
-static inline void _unused
+static void _unused
 atomic64_init(atomic64_t *v) {
 	atomic64_cmpset((volatile uint64_t *)&v->cnt, v->cnt, 0);
 }
 
-static inline int64_t _unused
+static int64_t _unused
 atomic64_read(atomic64_t *v) {
     return v->cnt;
 }
 
-static inline void _unused
+static void _unused
 atomic64_add(atomic64_t *v, int64_t inc) {
 	asm volatile(
 			"lock ; "
@@ -286,7 +286,7 @@ atomic64_add(atomic64_t *v, int64_t inc) {
 			);
 }
 
-static inline void _unused
+static void _unused
 atomic64_inc(atomic64_t *v) {
 	asm volatile(
 			"lock ; "
@@ -396,7 +396,7 @@ static void __attribute__((constructor(105))) __FastQInitCtor() {
  *  原始接口
  **********************************************************************************************************************/
 
-static void inline
+static void
 __fastq_create_ring(struct FastQModule *pmodule, const unsigned long src, const unsigned long dst) {
 
     const unsigned int ring_size = pmodule->ring_size;
@@ -453,7 +453,7 @@ __fastq_create_ring(struct FastQModule *pmodule, const unsigned long src, const 
 }
 
 
-static void inline
+static void
 __fastq_destroy_ring(struct FastQModule *pmodule, const unsigned long src, const unsigned long dst) {
 
     struct FastQRing *this_ring = __atomic_load_n(&pmodule->_ring[src], __ATOMIC_RELAXED);
@@ -488,7 +488,7 @@ __fastq_destroy_ring(struct FastQModule *pmodule, const unsigned long src, const
 }
 
 
-void inline
+void
 FastQCreateModule(const unsigned long module_id,
                      const mod_set *rxset, const mod_set *txset,
                      const unsigned int ring_size, const unsigned int msg_size,
@@ -685,7 +685,7 @@ FastQCreateModule(const unsigned long module_id,
 }
 
 
-bool inline
+bool
 FastQAddSet(const unsigned long moduleID, const mod_set *rxset, const mod_set *txset) {
 
     if(unlikely(!rxset && !txset)) {
@@ -756,7 +756,7 @@ FastQAddSet(const unsigned long moduleID, const mod_set *rxset, const mod_set *t
     return true;
 }
 
-bool inline
+bool
 FastQDeleteModule(const unsigned long moduleID) {
     if((moduleID <= 0 || moduleID > FASTQ_ID_MAX) ) {
         return false;
@@ -833,7 +833,7 @@ FastQDeleteModule(const unsigned long moduleID) {
 }
 
 
-bool inline
+bool
 FastQAttachName(const unsigned long moduleID, const char *name) {
 
     if(unlikely(moduleID <= 0 || moduleID > FASTQ_ID_MAX) ) {
@@ -872,7 +872,7 @@ FastQAttachName(const unsigned long moduleID, const char *name) {
 /**
  *  __FastQSend - 公共发送函数
  */
-static bool inline
+static bool
 __FastQSend(struct FastQRing *ring, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
              const void *msg, const size_t size) {
     assert(ring);
@@ -903,7 +903,7 @@ __FastQSend(struct FastQRing *ring, unsigned long msgType, unsigned long msgCode
     return true;
 }
 
-static inline struct FastQRing * __create_ring_when_send(unsigned int from, unsigned int to) {
+static struct FastQRing * __create_ring_when_send(unsigned int from, unsigned int to) {
 
     struct FastQRing *ring = NULL;
 
@@ -933,7 +933,7 @@ static inline struct FastQRing * __create_ring_when_send(unsigned int from, unsi
  *
  *  注意：from 和 to 需要使用 FastQCreateModule 注册后使用
  */
-bool inline
+bool
 FastQSend(unsigned int from, unsigned int to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
             const void *msg, size_t size) {
 
@@ -948,7 +948,7 @@ FastQSend(unsigned int from, unsigned int to, unsigned long msgType, unsigned lo
     return true;
 }
 
-bool inline
+bool
 FastQSendByName(const char* from, const char* to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
              const void *msg, size_t size) {
 
@@ -980,7 +980,7 @@ FastQSendByName(const char* from, const char* to, unsigned long msgType, unsigne
  *
  *  注意：from 和 to 需要使用 FastQCreateModule 注册后使用
  */
-bool inline
+bool
 FastQTrySend(unsigned int from, unsigned int to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
              const void *msg, size_t size) {
 
@@ -995,7 +995,7 @@ FastQTrySend(unsigned int from, unsigned int to, unsigned long msgType, unsigned
     return ret;
 }
 
-bool inline
+bool
 FastQTrySendByName(const char* from, const char* to, unsigned long msgType, unsigned long msgCode, unsigned long msgSubCode,
              const void *msg, size_t size) {
 
@@ -1012,7 +1012,7 @@ FastQTrySendByName(const char* from, const char* to, unsigned long msgType, unsi
     return FastQTrySend(from_id, to_id, msgType, msgCode, msgSubCode, msg, size);
 }
 
-static bool inline
+static bool
 __FastQRecv(struct FastQRing *ring, unsigned long *type, unsigned long *code, unsigned long *subcode, void *msg, size_t *size) {
 
     unsigned int t = ring->_tail;
@@ -1063,7 +1063,7 @@ __FastQRecv(struct FastQRing *ring, unsigned long *type, unsigned long *code, un
  *
  *  注意：from 需要使用 FastQCreateModule 注册后使用
  */
-bool inline
+bool
 FastQRecv(unsigned int from, fq_msg_handler_t handler) {
 
     assert(handler && "NULL pointer error.");
@@ -1160,7 +1160,7 @@ FastQRecv(unsigned int from, fq_msg_handler_t handler) {
     return true;
 }
 
-bool inline
+bool
 FastQRecvByName(const char *from, fq_msg_handler_t handler) {
     assert(from && "NULL string.");
     unsigned long from_id = dict_find_module_id_byname((char *)from);
@@ -1178,7 +1178,7 @@ FastQRecvByName(const char *from, fq_msg_handler_t handler) {
  *  param[in]   fp    文件指针,当 fp == NULL，默认使用 stderr
  *  param[in]   module_id 需要显示的模块ID， 等于 0 时显示全部
  */
-bool inline
+bool
 FastQMsgStatInfo(struct FastQModuleMsgStatInfo *buf, unsigned int buf_mod_size, unsigned int *num,
                             fq_module_filter_t filter) {
 
@@ -1237,7 +1237,7 @@ FastQMsgStatInfo(struct FastQModuleMsgStatInfo *buf, unsigned int buf_mod_size, 
  *  	     NODE_4:4   ->    NODE_1:1                719606           719599               -1
  *  	 Total enqueue          2219566, dequeue          2219547
  */
-void inline
+void
 FastQDump(FILE*fp, unsigned long module_id) {
 
     if(unlikely(!fp)) {
@@ -1300,7 +1300,7 @@ FastQDump(FILE*fp, unsigned long module_id) {
 }
 
 
-bool inline
+bool
 FastQMsgNum(unsigned int ID,
             unsigned long *nr_enqueues, unsigned long *nr_dequeues, unsigned long *nr_currents) {
 
